@@ -1,7 +1,9 @@
-import PySimpleGUI as sg
+# -*- coding: utf-8 -*-
+import FreeSimpleGUI as sg
 from utility import Utility
 from gauss import Gauss
 from crout import Crout
+from inverse import Inverse
 
 class GUI:
 
@@ -9,6 +11,7 @@ class GUI:
         self.util = Utility()
         self.gauss = Gauss()
         self.crout = Crout()
+        self.inverse = Inverse()
 
     def start_gui(self):
         sg.set_options(font=("Helvetica", 15)) # Setzt die Standardschriftart für das GUI
@@ -50,14 +53,14 @@ class GUI:
              sg.Column(column_mat_b)],
             [sg.Button("Multiplizieren")],
             [sg.Text("Ergebnis:")],
-            [sg.Multiline(key="-RESULT-", size=(48, 8))]
+            [sg.Multiline(key="-RESULT-", size=(40, 6))]
         ]
         # Layout für Gauß und LR-Zerlegung
         layout_lu_decomposition = [
             [sg.Text("LR-Zerlegung")],
             [sg.Text(
                 "Geben Sie eine Matrix zum Zerlegen ein")],
-            [sg.Multiline(key="-INPUTLU-", size=(48, 8))],
+            [sg.Multiline(key="-INPUTLU-", size=(40, 6))],
             #[sg.Button("Zerlegen")],
             [sg.Button("Gauss LR"), sg.Button("Crout LR")],
             [sg.Text("Ergebnisse:")],
@@ -65,13 +68,27 @@ class GUI:
              sg.Column(column_mat_u),
              sg.Column(column_mat_lu)]
         ]
+        
+        # Layout für Matrix-Inverse (Gauß-Jordan)
+        layout_inverse = [
+            [sg.Text("Matrix-Inverse (Gauß-Jordan-Algorithmus)")],
+            [sg.Text("Geben Sie eine quadratische Matrix ein, \nz. B. [[4, 7], [2, 6]]")],
+            [sg.Multiline(key="-INPUTINVERSE-", size=(40, 6))],
+            [sg.Button("Inverse berechnen")],
+            [sg.Text("Inverse Matrix:")],
+            [sg.Multiline(key="-RESULTINVERSE-", size=(40, 6))]
+        ]
 
         # Gesamtlayout & Window
-        layout = [[sg.Column(layout_multi), sg.VerticalSeparator(color="black"),
-                  sg.Column(layout_lu_decomposition)], [sg.Button("Schließen")]]
+        layout = [[sg.Column(layout_multi, scrollable=True, vertical_scroll_only=True), 
+                  sg.VerticalSeparator(color="black"),
+                  sg.Column(layout_lu_decomposition, scrollable=True, vertical_scroll_only=True)], 
+                  [sg.HorizontalSeparator()],
+                  [sg.Column(layout_inverse, scrollable=True, vertical_scroll_only=True)],
+                  [sg.Button("Schließen")]]
 
         window = sg.Window(
-            "Matrixmultiplikation & LR-Zerlegung", layout, resizable=True)
+            "Matrixmultiplikation & LR-Zerlegung & Inverse", layout, resizable=True, size=(1200, 800))
 
         # Erstellt event loop - wartet auf Benutzeraktion
         while True:
@@ -165,3 +182,21 @@ class GUI:
                 except Exception as e:
                     window["-INPUTLU-"].update(str(e))
                     window.close()
+            
+            # Matrix-Inverse mit Gauß-Jordan berechnen
+            if event == "Inverse berechnen":
+                matrix = self.util.format_matrix_str_to_list(values["-INPUTINVERSE-"])
+                
+                if isinstance(matrix, str):
+                    window["-RESULTINVERSE-"].update(matrix)
+                    continue
+                
+                try:
+                    inverse_matrix = self.inverse.gauss_jordan_inverse(matrix)
+                    
+                    window["-RESULTINVERSE-"].update(
+                        self.util.format_matrix_list_to_str(inverse_matrix)
+                    )
+                
+                except Exception as e:
+                    window["-RESULTINVERSE-"].update(f"Fehler: {str(e)}")
