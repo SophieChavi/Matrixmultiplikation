@@ -1,14 +1,17 @@
 import PySimpleGUI as sg
 from utility import Utility
-#Gauß
+from gauss import Gauss
+from crout import Crout
 
 class GUI:
 
     def __init__(self) -> None:
         self.util = Utility()
-        #self.gauss = Gauss()
+        self.gauss = Gauss()
+        self.crout = Crout()
 
     def start_gui(self):
+        sg.set_options(font=("Helvetica", 15)) # Setzt die Standardschriftart für das GUI
         """
         Starts the gui and runs an event-loop that blocks code from executing after this until the gui-window is closed
         """
@@ -55,7 +58,8 @@ class GUI:
             [sg.Text(
                 "Geben Sie eine Matrix zum Zerlegen ein")],
             [sg.Multiline(key="-INPUTLU-", size=(48, 8))],
-            [sg.Button("Zerlegen")],
+            #[sg.Button("Zerlegen")],
+            [sg.Button("Gauss LR"), sg.Button("Crout LR")],
             [sg.Text("Ergebnisse:")],
             [sg.Column(column_mat_l),
              sg.Column(column_mat_u),
@@ -94,19 +98,70 @@ class GUI:
                 window["-RESULT-"].update(
                     self.util.format_matrix_list_to_str(result))
 
+            # Nathania: nicht mehr relevant
             # Vorbereitung für Gauß: Übergibt Matrix an den Gauß-Algorithmus
-            if event == "Zerlegen":
-                input = self.util.format_matrix_str_to_list(
-                    values["-INPUTLU-"])
-                if input == None:
-                    break
+            #if event == "Zerlegen":
+            #    input = self.util.format_matrix_str_to_list(
+            #        values["-INPUTLU-"])
+            #    if input == None:
+            #        break
+            #    try:
+            #        l_mat, u_mat, j_matrix = self.gauss.lu_decomposition(input)
+            #       window["-MATRIXL-"].update(
+            #            self.util.format_matrix_list_to_str(l_mat))
+            #        window["-MATRIXU-"].update(
+            #            self.util.format_matrix_list_to_str(u_mat))
+            #        window["-MATRIXLU-"].update(self.util.format_matrix_list_to_str(j_matrix))
+            #    except ValueError:
+            #        window["-INPUTLU-"].print("\n Falsches Format, bitte neue Matrix eingeben")
+            if event == "Gauss LR":
+                matrix = self.util.format_matrix_str_to_list(values["-INPUTLU-"])
+
+                if isinstance(matrix, str):
+                    window["-INPUTLU-"].update(matrix)
+                    continue
+
                 try:
-                    l_mat, u_mat, j_matrix = self.gauss.lu_decomposition(input)
+                    L, R = self.gauss.gauss_lr(matrix)
+
                     window["-MATRIXL-"].update(
-                        self.util.format_matrix_list_to_str(l_mat))
+                        self.util.format_matrix_list_to_str(L)
+                        )
                     window["-MATRIXU-"].update(
-                        self.util.format_matrix_list_to_str(u_mat))
-                    window["-MATRIXLU-"].update(self.util.format_matrix_list_to_str(j_matrix))
-                except ValueError:
-                    window["-INPUTLU-"].print("\n Falsches Format, bitte neue Matrix eingeben")
-        window.close()
+                        self.util.format_matrix_list_to_str(R)
+                        )
+                    window["-MATRIXLU-"].update(
+                        self.util.format_matrix_list_to_str(
+                        self.util.get_products(L, R)
+                        )
+                    )
+                
+                except Exception as e:
+                    window["-INPUTLU-"].update(str(e))
+                    window.close()
+
+            if event == "Crout LR":
+                matrix = self.util.format_matrix_str_to_list(values["-INPUTLU-"])
+
+                if isinstance(matrix, str):
+                    window["-INPUTLU-"].update(matrix)
+                    continue
+
+                try:
+                    L, R = self.crout.crout_lr(matrix)
+
+                    window["-MATRIXL-"].update(
+                        self.util.format_matrix_list_to_str(L)
+                        )
+                    window["-MATRIXU-"].update(
+                        self.util.format_matrix_list_to_str(R)
+                        )
+                    window["-MATRIXLU-"].update(
+                        self.util.format_matrix_list_to_str(
+                        self.util.get_products(L, R)
+                        )
+                    )
+                
+                except Exception as e:
+                    window["-INPUTLU-"].update(str(e))
+                    window.close()
