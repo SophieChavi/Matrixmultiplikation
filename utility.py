@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 import ast
 from numbers import Number
 
@@ -30,12 +31,14 @@ class Utility:
     # Matrix als String formatieren: Matrix Liste in lesbaren String
     def format_matrix_list_to_str(self, matrix: list[list[float]]):
         """changes a list-type matrix into a str-matrix with new-lines added"""
-        matrix = str(matrix).split('],')
+        # Round values to avoid floating point precision issues
+        rounded_matrix = [[round(val, 10) for val in row] for row in matrix]
+        matrix_str = str(rounded_matrix).split('],')
         result = ""
 
-        for i in range(len(matrix)-1):
-            result += matrix[i] + "],\n"
-        result += matrix[len(matrix)-1]
+        for i in range(len(matrix_str)-1):
+            result += matrix_str[i] + "],\n"
+        result += matrix_str[len(matrix_str)-1]
 
         return result
 
